@@ -4,13 +4,14 @@ import java.net.*;
 
 
 public class server {
+	private static final int PORT = Integer.parseInt(System.getenv().getOrDefault("PORT", "10000"));
     public static void main(String[] args) {
-        int port = 12332;
+    	
 
         try (ServerSocket serverSocket = new ServerSocket()) {
             serverSocket.setReuseAddress(true);
-            serverSocket.bind(new InetSocketAddress("172.20.10.5", port));
-            System.out.println("Server đang chạy trên cổng " + port + "...");
+            serverSocket.bind(new InetSocketAddress("0.0.0.0", PORT));
+            System.out.println("Server đang chạy trên cổng " + PORT + "...");
 
             while (true) {
             	System.out.println("Server đang chạy và chờ kết nối...");
