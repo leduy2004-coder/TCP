@@ -1,21 +1,32 @@
-# Bước 1: Sử dụng một image Maven có sẵn để xây dựng ứng dụng
-FROM maven:3.8.4-jdk-11 AS build
+FROM maven:3.8.4-openjdk-17-slim AS build
 
-# Bước 2: Sao chép mã nguồn vào container
+# Set working directory
 WORKDIR /app
-COPY . /app
 
-# Bước 3: Chạy lệnh Maven để build dự án
-RUN mvn clean install -DskipTests
+# Set JAVA_HOME explicitly
+ENV JAVA_HOME=/usr/local/openjdk-17
 
-# Bước 4: Sử dụng image Java để chạy ứng dụng
-FROM openjdk:11-jre-slim
+# Copy only the files needed for dependency resolution
+COPY pom.xml .
+COPY src ./src
 
-# Bước 5: Sao chép file JAR đã build vào container
-COPY --from=build /app/target/your-app-name.jar /app/your-app-name.jar
+# Build the application with explicit Java version
+RUN mvn clean package -DskipTests -Dmaven.compiler.source=17 -Dmaven.compiler.target=17
 
-# Bước 6: Expose cổng mà ứng dụng sẽ chạy
+# Create the final image
+FROM openjdk:17-slim
+
+WORKDIR /app
+
+# Copy the built JAR file
+COPY --from=build /app/target/socket-server-0.0.1-SNAPSHOT.jar app.jar
+
+# Set environment variables
+ENV PORT=8080
+ENV JAVA_OPTS="-Xmx512m -Xms256m"
+
+# Expose the port
 EXPOSE 8080
 
-# Bước 7: Chạy ứng dụng khi container khởi động
-CMD ["java", "-jar", "/app/your-app-name.jar"]
+# Run the application with proper signal handling
+CMD ["sh", "-c", "java $JAVA_OPTS -jar app.jar"]
